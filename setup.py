@@ -18,6 +18,7 @@ if __name__ == '__main__':
         install_requires=[
             'numpy',
             'networkx',
-            'numba'
+            'numba',
+            'skimage'
         ],
     )

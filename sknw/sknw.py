@@ -1,6 +1,7 @@
 import numpy as np
 from numba import jit
 import networkx as nx
+from skimage.morphology import label
 
 def neighbors(shape):
     dim = len(shape)
@@ -23,9 +24,10 @@ def mark(img, nbs): # mark the array use (0, 1, 2)
         if s==2:img[p]=1
         else:img[p]=2
 
+
 @jit(nopython=True) # trans index to r, c...
 def idx2rc(idx, acc):
-    rst = np.zeros((len(idx), len(acc)), dtype=np.int16)
+    rst = np.zeros((len(idx), len(acc)), dtype=np.int32)
     for i in range(len(idx)):
         for j in range(len(acc)):
             rst[i,j] = idx[i]//acc[j]
@@ -57,7 +59,6 @@ def trace(img, p, nbs, acc, buf):
     c1 = 0; c2 = 0;
     newp = 0
     cur = 0
-
     while True:
         buf[cur] = p
         img[p] = 0
@@ -98,7 +99,7 @@ def build_graph(nodes, edges, multi=False):
     graph = nx.MultiGraph() if multi else nx.Graph()
     for i in range(len(nodes)):
         graph.add_node(i, pts=nodes[i], o=nodes[i].mean(axis=0))
-    for s,e,pts in edges:
+    for s,e,pts in edges:      
         l = np.linalg.norm(pts[1:]-pts[:-1], axis=1).sum()
         graph.add_edge(s,e, pts=pts, weight=l)
     return graph
@@ -113,6 +114,12 @@ def build_sknw(ske, multi=False):
     nbs = neighbors(buf.shape)
     acc = np.cumprod((1,)+buf.shape[::-1][:-1])[::-1]
     mark(buf, nbs)
+    objs, cnt = label(buf>0, return_num=True)
+    # if a circle exits, there will not be nodes detected, use label to find a skeleton object that has no node  
+    for i in range(1, cnt+1):
+        if not np.any(buf[objs==i]==2):
+            buf[tuple(np.argwhere(objs==1)[0])]=2
+
     pts = np.array(np.where(buf.ravel()==2))[0]
     nodes, edges = parse_struc(buf, pts, nbs, acc)
     return build_graph(nodes, edges, multi)
