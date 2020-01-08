@@ -98,7 +98,7 @@ def parse_struc(img, pts, nbs, acc):
 def build_graph(nodes, edges, multi=False):
     graph = nx.MultiGraph() if multi else nx.Graph()
     for i in range(len(nodes)):
-        graph.add_node(i, pts=nodes[i], o=nodes[i].mean(axis=0))
+        graph.add_node(i, pts=nodes[i], o=nodes[i].mean(axis=0).round())
     for s,e,pts in edges:      
         l = np.linalg.norm(pts[1:]-pts[:-1], axis=1).sum()
         graph.add_edge(s,e, pts=pts, weight=l)
