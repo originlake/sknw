@@ -19,6 +19,6 @@ if __name__ == '__main__':
             'numpy',
             'networkx',
             'numba',
-            'skimage'
+            'scikit-image'
         ],
     )
